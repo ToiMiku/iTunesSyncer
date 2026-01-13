@@ -1,7 +1,7 @@
 ﻿# iTunesSyncer
 
-iTunesで管理しているプレイリスト情報を元に、
-楽曲ファイルとプレイリストを同期する Windows 向けツールです。
+PC上のiTunesで管理している音楽ファイルとプレイリストをそのまま、USB・SDカード・Androidスマホに同期させるWindowsのツールです。
+AndroidアプリのVLCとPowerAmpに対応しています。
 
 <img width="1097" height="631" alt="image" src="https://github.com/user-attachments/assets/5c12c05e-88fb-4fe9-9707-12b76c55ea48" />
 

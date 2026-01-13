@@ -1,0 +1,226 @@
+﻿
+//#define SYNC_PLAYLIST_DISABLE
+#define SYNC_TRACK_DISABLE
+
+using iTunesSyncer.Core.Data;
+using iTunesSyncer.Extensions;
+using iTunesSyncer.FileAccess;
+using iTunesSyncer.PlaylistUtility;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+
+namespace iTunesSyncer.Core
+{
+    public class SyncronizeUtility
+    {
+        private enum CheckCopyAndDeleteTrackResult
+        {
+            DoNothing,
+            Copy,
+            Delete,
+        }
+
+        public static (IList<Track> copyTracks, IList<Track> deleteTracks) GetCopyAndDeleteTracks
+            (IEnumerable<TrackDiffItem> allTrackDiffItems)
+        {
+            // 追加・更新・削除と判定されたトラックを列挙する
+            // 重複しているものは除外する
+            var distincTrackDiffItems = allTrackDiffItems
+                .Where(x =>
+                    x.Status == TrackDiffItem.DiffStatus.Added
+                 || x.Status == TrackDiffItem.DiffStatus.Updated
+                 || x.Status == TrackDiffItem.DiffStatus.Deleted)
+                .DistinctBy(x => x.NotNullItem.GetRelativePath());
+
+            var copyTracks = new List<Track>();
+            var deleteTracks = new List<Track>();
+
+            foreach (var targetItem in distincTrackDiffItems)
+            {
+                var checkResultTrackDiffItem = CheckCopyAndDeleteTrack(
+                    allTrackDiffItems, targetItem.NotNullItem.GetRelativePath());
+
+                if (checkResultTrackDiffItem is null)
+                    continue;
+
+                switch (checkResultTrackDiffItem.Status)
+                {
+                case TrackDiffItem.DiffStatus.Added:
+                case TrackDiffItem.DiffStatus.Updated:
+                    copyTracks.Add(checkResultTrackDiffItem.Item1);
+                    break;
+
+                case TrackDiffItem.DiffStatus.Deleted:
+                    deleteTracks.Add(checkResultTrackDiffItem.Item2);
+                    break;
+                }
+            }
+
+            return (copyTracks, deleteTracks);
+        }
+
+        private static TrackDiffItem CheckCopyAndDeleteTrack
+            (IEnumerable<TrackDiffItem> allTrackListItems, string relativePath)
+        {
+            //関連するアイテムのリストを列挙
+            var relatedItems = allTrackListItems
+                .Where(x =>
+                    x.NotNullItem.GetRelativePath() == relativePath);
+
+            // 判定結果をまとめる
+            var isAnys = CheckAnyStatus(relatedItems);
+
+            if (isAnys.isAnyEqual && isAnys.isAnyUpdated)
+            {
+                // EqualとUpdatedが同時にあるのはおかしいので、エラーにする
+                throw new Exception("EqualとUpdatedが同時にあるのはおかしい");
+            }
+            else if (isAnys.isAnyEqual)
+            {
+                // Equalがあればファイルに更新がないということなので、コピーも削除もしないでいい
+                return null;
+            }
+            else if (isAnys.isAnyUpdated)
+            {
+                // Updatedがあるならコピーで確定
+                return relatedItems.First(x => x.Status == TrackDiffItem.DiffStatus.Updated);
+            }
+            else if (isAnys.isAnyAdded && isAnys.isAnyDeleted)
+            {
+                // AddedとDeletedが両方ある場合、以下のパターンが考えられる
+                // 1. リストの順番が入れ替わっただけ
+                // 2. リストの順番が入れ替わり、ファイルも更新された
+                var addedFileHash = relatedItems
+                    .First(x => x.Status == TrackDiffItem.DiffStatus.Added)
+                    .Item1.GetFileHash();
+                var deletedFileHash = relatedItems
+                    .First(x => x.Status == TrackDiffItem.DiffStatus.Deleted)
+                    .Item2.GetFileHash();
+
+                if (addedFileHash == deletedFileHash)
+                {
+                    // AddedとDeletedにファイル差分がないため、コピーも削除もしないでいい
+                    return null;
+                }
+                else
+                {
+                    // ファイル差分があるため、コピーする
+                    return relatedItems.First(x => x.Status == TrackDiffItem.DiffStatus.Added);
+                }
+            }
+            else if (isAnys.isAnyAdded)
+            {
+                // コピーする
+                return relatedItems.First(x => x.Status == TrackDiffItem.DiffStatus.Added);
+            }
+            else if (isAnys.isAnyDeleted)
+            {
+                // 削除
+                return relatedItems.First(x => x.Status == TrackDiffItem.DiffStatus.Deleted);
+            }
+            else
+            {
+                throw new Exception("全部引っかからないのはおかしい");
+            }
+        }
+
+        public static void CopyTrack(Track track, string exportPath, IFileSystem exportFileSystem)
+        {
+            var inputPath = track.Location;
+            var relativePath = PathExtension.UriDecode(track.GetRelativePath());
+            var outputPath = Path.Combine(exportPath, relativePath);
+
+#if !SYNC_TRACK_DISABLE
+            FileControl.CreateDirAndCopyFile(inputPath, outputPath, exportFileSystem);
+#endif
+        }
+
+        public static void DeleteTrack(Track track, string exportPath, IFileSystem exportFileSystem)
+        {
+            var outputPath = Path.Combine(exportPath, track.Location);
+
+#if !SYNC_TRACK_DISABLE
+            FileControl.DeleteFile(outputPath, exportFileSystem);
+#endif
+        }
+
+        private static (bool isAnyEqual, bool isAnyAdded, bool isAnyDeleted, bool isAnyUpdated) CheckAnyStatus
+            (IEnumerable<TrackDiffItem> trackListViewItems)
+        {
+            var isAnyEqual = false;
+            var isAnyAdded = false;
+            var isAnyDeleted = false;
+            var isAnyUpdated = false;
+
+            foreach (var trackStatus in trackListViewItems.Select(x => x.Status))
+            {
+                switch (trackStatus)
+                {
+                case TrackDiffItem.DiffStatus.Equal: isAnyEqual = true; break;
+                case TrackDiffItem.DiffStatus.Added: isAnyAdded = true; break;
+                case TrackDiffItem.DiffStatus.Deleted: isAnyDeleted = true; break;
+                case TrackDiffItem.DiffStatus.Updated: isAnyUpdated = true; break;
+
+                default:
+                    throw new Exception("ありえないの来た");
+                }
+            }
+
+            return (isAnyEqual, isAnyAdded, isAnyDeleted, isAnyUpdated);
+        }
+
+
+        public static void SyncronizePlaylist(
+            PlaylistDiffItem playlistViewItem,
+            string exportPath, IFileSystem exportFileSystem,
+            IPlaylistIO playlistIO)
+        {
+            switch (playlistViewItem.Status)
+            {
+            case PlaylistDiffItem.DiffStatus.Equal:
+                // 差分がなければ何もしない
+                break;
+
+            case PlaylistDiffItem.DiffStatus.Added:
+            case PlaylistDiffItem.DiffStatus.Updated:
+                var newPlaylist = CreateExportPlaylist(playlistViewItem.Item1, exportPath, playlistIO);
+
+#if !SYNC_PLAYLIST_DISABLE
+                // 同期先のプレイリストを更新する
+                using(var stream = exportFileSystem.FileAccess.OpenWrite(newPlaylist.Location))
+                {
+                    newPlaylist.Save(stream, playlistIO);
+                }
+#endif
+                break;
+
+            case PlaylistDiffItem.DiffStatus.Deleted:
+#if !SYNC_PLAYLIST_DISABLE
+                // 同期先のプレイリストを削除する
+                FileControl.DeleteFile(playlistViewItem.Item2.Location, exportFileSystem);
+#endif
+                break;
+
+            default:
+                throw new Exception("おかしなやつ来た");
+            }
+        }
+
+        private static Playlist CreateExportPlaylist(Playlist importPlaylist, string exportPath, IPlaylistIO playlistIO)
+        {
+            var exportPlaylist = new Playlist(importPlaylist)
+            {
+                Location = Path.Combine(exportPath, importPlaylist.Title + playlistIO.ExportFileExtension),
+            };
+
+            foreach (var track in exportPlaylist.Tracks)
+            {
+                track.Location = PathExtension.UriDecode(track.GetRelativePath());
+            }
+
+            return exportPlaylist;
+        }
+    }
+}

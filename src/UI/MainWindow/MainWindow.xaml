@@ -1,0 +1,362 @@
+﻿<Window x:Class="iTunesSyncer.UI.MainWindow.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:local="clr-namespace:iTunesSyncer.UI.MainWindow"
+        xmlns:myv="clr-namespace:iTunesSyncer.UI.MyViews"
+        mc:Ignorable="d"
+        Title="iTunesSyncer" Height="531" Width="926"
+        ResizeMode="CanResizeWithGrip">
+
+    <Window.DataContext>
+        <local:MainWindowViewModel />
+    </Window.DataContext>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="60"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="25"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="25"/>
+            <RowDefinition Height="30"/>
+        </Grid.RowDefinitions>
+        
+        <Grid
+            Grid.Row="0"
+            Margin="5 5 5 5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="60"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Label
+                Grid.Column="0" Grid.Row="0"
+                Content="iTunesプレイリストのインポート元"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Height="26"/>
+
+            <TextBox
+                Grid.Column="1" Grid.Row="0"
+                TextWrapping="Wrap"
+                Text="{Binding ImportPath.Value, UpdateSourceTrigger=PropertyChanged}"
+                IsEnabled="{Binding IsEnabledInputGroup.Value}"
+                VerticalAlignment="Top"
+                Height="18"/>
+
+            <Button
+                Grid.Column="2" Grid.Row="0"
+                x:Name="ReferITunes"
+                Content="参照"
+                VerticalAlignment="Top"
+                RenderTransformOrigin="0.53,-0.649"
+                HorizontalAlignment="Right"
+                Width="50"
+                Command="{Binding OpenImportPathCommand}"/>
+
+            <Label
+                Grid.Column="0" Grid.Row="1"
+                Content="基準パス"
+                HorizontalAlignment="Left"
+                HorizontalContentAlignment="Right"
+                Height="26" VerticalAlignment="Top"/>
+
+            <TextBox
+                Grid.Column="1" Grid.Row="1"
+                TextWrapping="Wrap"
+                IsEnabled="{Binding IsEnabledInputGroup.Value}"
+                Text="{Binding ReferencePath.Value, UpdateSourceTrigger=PropertyChanged}" Height="18" VerticalAlignment="Top"/>
+
+            <Button
+                Grid.Column="2" Grid.Row="1"
+                Content="参照"
+                VerticalAlignment="Top"
+                RenderTransformOrigin="0.53,-0.649"
+                Width="50"
+                Command="{Binding OpenReferencePathCommand}" HorizontalAlignment="Right"/>
+        </Grid>
+
+        <Grid
+            Grid.Row="1"
+            Margin="5 5 5 5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="180"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="90"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Label
+                Grid.Column="0" Grid.Row="0"
+                Content="エクスポート先フォルダ"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"/>
+            <ComboBox
+                Grid.Column="1" Grid.Row="0"
+                VerticalAlignment="Top"
+                SelectedIndex="{Binding ExportSelectedIndex.Value}"
+                IsEnabled="{Binding IsEnabledInputGroup.Value}"
+                Height="20">
+
+                <i:Interaction.Triggers>
+                    <i:EventTrigger EventName="SelectionChanged">
+                        <i:InvokeCommandAction Command="{Binding Path=ExportSelectedChangedCommand}" />
+                    </i:EventTrigger>
+                </i:Interaction.Triggers>
+                
+                <ComboBoxItem Content="ローカルフォルダ"/>
+                <ComboBoxItem Content="FTP(File Transfer Protocol)"/>
+            </ComboBox>
+            <TextBox
+                Grid.Column="3" Grid.Row="0"
+                TextWrapping="Wrap"
+                IsEnabled="False"
+                Text="{Binding ReadOnlyExportPath.Value, UpdateSourceTrigger=PropertyChanged}"
+                VerticalAlignment="Top"/>
+            <Button
+                Grid.Column="4" Grid.Row="0"
+                Content="詳細設定"
+                VerticalAlignment="Top"
+                RenderTransformOrigin="0.53,-0.649"
+                HorizontalAlignment="Right"
+                Width="80"
+                Command="{Binding OpenExportSettingCommand}"/>
+        </Grid>
+
+        <Button
+            Grid.Row="2"
+            x:Name="ImportPlaylist"
+            VerticalAlignment="Center"
+            Height="20"
+            Content="{Binding ImportButtonText.Value}"
+            Command="{Binding ImportPlaylistCommand}" Margin="10,0,10,0" />
+
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            
+            <ListView
+                Grid.Column="0"
+                Margin="10,10,0,10"
+                x:Name="PlaylistListView"
+                Grid.IsSharedSizeScope="true"
+                ItemsSource="{Binding PlaylistListViewSource}" HorizontalAlignment="Left" Width="Auto"
+                SelectedItem="{Binding PlaylistSelectedItem.Value}"
+                SelectedIndex="{Binding PlaylistSelectedIndex.Value}"
+                d:ItemsSource="{d:SampleData ItemCount=5}" SelectionMode="Single">
+
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="{x:Type ListViewItem}">
+                        <Setter Property="Background" Value="{Binding Background.Value}"/>
+                    </Style>
+                </ListView.ItemContainerStyle>
+
+                <i:Interaction.Triggers>
+                    <i:EventTrigger EventName="SelectionChanged">
+                        <i:InvokeCommandAction Command="{Binding Path=PlaylistSelectedChangedCommand}" />
+                    </i:EventTrigger>
+                </i:Interaction.Triggers>
+
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Width="150">
+                            <GridViewColumn.Header>
+                                <Label
+                                    Content="プレイリスト名"
+                                    HorizontalAlignment="Left"
+                                    Margin="0,0,0,0"
+                                    VerticalAlignment="Top"/>
+                            </GridViewColumn.Header>
+
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Label
+                                        Content="{Binding PlaylistTitle.Value}"
+                                        Height="Auto"
+                                        HorizontalAlignment="Left"
+                                        Margin="0,0,0,0"
+                                        VerticalAlignment="Top"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <GridViewColumn Width="100">
+                            <GridViewColumn.Header>
+                                <Label
+                                Content="ステータス"
+                                HorizontalAlignment="Left"
+                                Margin="0,0,0,0"
+                                Padding="0,0,0,0"
+                                VerticalAlignment="Top"/>
+                            </GridViewColumn.Header>
+
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Label
+                                    Content="{Binding StatusText.Value}"
+                                    Height="Auto"
+                                    HorizontalAlignment="Left"
+                                    Margin="0,0,0,0"
+                                    VerticalAlignment="Top"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+
+            <ListView
+                Grid.Column="1"
+                ItemsSource="{Binding TrackListViewSource}"
+                d:ItemsSource="{d:SampleData ItemCount=5}" Margin="10,10,10,10">
+
+                <!-- ここでクリック判定しないと、Popupが範囲外になってもなぜか閉じない -->
+                <ListView.Resources>
+                    <Style TargetType="GridViewColumnHeader" x:Key="TrackStatusHeaderStyle">
+                        <Setter Property="Command" Value="{Binding ClickTrackListViewColumnCommand}" />
+                    </Style>
+                </ListView.Resources>
+
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="{x:Type ListViewItem}">
+                        <Setter Property="Background" Value="{Binding Background.Value}"/>
+                    </Style>
+                </ListView.ItemContainerStyle>
+
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Width="400">
+                            <GridViewColumn.Header>
+                                <Label
+                                    Content="楽曲名"
+                                    HorizontalAlignment="Left"
+                                    Margin="0,0,0,0"
+                                    VerticalAlignment="Top"/>
+                            </GridViewColumn.Header>
+
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Label
+                                        Content="{Binding SoundTitle.Value}"
+                                        Height="Auto"
+                                        HorizontalAlignment="Left"
+                                        Margin="0,0,0,0"
+                                        VerticalAlignment="Top"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <GridViewColumn Width="100">
+                            <GridViewColumnHeader Name="TrackStatusHeader" Style="{StaticResource TrackStatusHeaderStyle}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Label
+                                        Content="ステータス"
+                                        HorizontalAlignment="Left"
+                                        Margin="0,0,0,0"
+                                        Padding="0,0,0,0"
+                                        VerticalAlignment="Top"/>
+                                    <Image
+                                        Source="{Binding TrackListViewStatusFilterIcon.Value}"
+                                        Width="16" Height="16"
+                                        Margin="10,0,0,0">
+                                    </Image>
+                                </StackPanel>
+                            </GridViewColumnHeader>
+
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Label
+                                    Content="{Binding StatusText.Value}"
+                                    Height="Auto"
+                                    HorizontalAlignment="Left"
+                                    Margin="0,0,0,0"
+                                    VerticalAlignment="Top"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+
+            <myv:FollowablePopup
+                IsOpen="{Binding IsOpenTrackStatusPopup.Value}"
+                PlacementTarget="{Binding ElementName=TrackStatusHeader}"
+                Placement="Bottom" StaysOpen="false">
+
+                <Border BorderBrush="Black" BorderThickness="1">
+                    <StackPanel Orientation="Vertical" Background="White"
+                            Width="200" Height="Auto">
+                        <CheckBox Padding="5, 2, 5, 2"
+                              VerticalAlignment="Center" VerticalContentAlignment="Center"
+                              IsChecked="{Binding IsVisibleEqualTrackItem.Value}"
+                              Content="{Binding VisibleEqualTrackItemText.Value}"/>
+                        <CheckBox Padding="5, 2, 5, 2"
+                              VerticalAlignment="Center" VerticalContentAlignment="Center"
+                              IsChecked="{Binding IsVisibleAddedTrackItem.Value}"
+                              Content="{Binding VisibleAddedTrackItemText.Value}"/>
+                        <CheckBox Padding="5, 2, 5, 2"
+                              VerticalAlignment="Center" VerticalContentAlignment="Center"
+                              IsChecked="{Binding IsVisibleDeletedTrackItem.Value}"
+                              Content="{Binding VisibleDeletedTrackItemText.Value}"/>
+                        <CheckBox Padding="5, 2, 5, 2"
+                              VerticalAlignment="Center" VerticalContentAlignment="Center"
+                              IsChecked="{Binding IsVisibleUpdatedTrackItem.Value}"
+                              Content="{Binding VisibleUpdatedTrackItemText.Value}"/>
+                        <CheckBox Padding="5, 2, 5, 2"
+                              VerticalAlignment="Center" VerticalContentAlignment="Center"
+                              IsChecked="{Binding IsVisibleErrorTrackItem.Value}"
+                              Content="{Binding VisibleErrorTrackItemText.Value}"/>
+                        <Button Margin="5, 5, 5, 5"
+                            Width="Auto" Height="Auto"
+                            Content="OK"
+                            Command="{Binding TrackStatusPopupOkCommand}"/>
+                    </StackPanel>
+                </Border>
+            </myv:FollowablePopup>
+
+        </Grid>
+
+        <Button
+            Grid.Row="4"
+            x:Name="Synchronize"
+            VerticalAlignment="Center"
+            Height="20"
+            Content="{Binding SyncronizeButtonText.Value}"
+            Command="{Binding SyncronizeCommand}" Margin="10,0,10,0"/>
+
+        <StatusBar
+            Grid.Row="5" VerticalAlignment="Center" Height="26">
+
+            <ProgressBar
+                Width="100"
+                Height="20"
+                Value="{Binding ProgressBarRatio.Value, UpdateSourceTrigger=PropertyChanged}"
+                VerticalAlignment="Center"/>
+            <Label
+                Width="50"
+                Content="{Binding ProgressLabelRatio.Value, UpdateSourceTrigger=PropertyChanged}"
+                VerticalAlignment="Center" VerticalContentAlignment="Center" Height="30"/>
+
+            <Separator/>
+
+            <Label
+                Content="{Binding ProgressText.Value, UpdateSourceTrigger=PropertyChanged}"
+                Foreground="{Binding ProgressTextBrush.Value}"
+                VerticalAlignment="Center" VerticalContentAlignment="Center" Height="30"/>
+        </StatusBar>
+    </Grid>
+</Window>

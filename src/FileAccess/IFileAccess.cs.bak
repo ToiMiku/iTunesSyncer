@@ -1,0 +1,121 @@
+﻿using System.IO;
+
+namespace iTunesSyncer.FileAccess
+{
+
+    /// <summary>
+    /// FileMode の動作一覧表
+    /// 
+    /// |------------------|-------------------------------|------------------------------------|------------|
+    /// | FileMode         | ファイルが存在する場合        | ファイルが存在しない場合           | シーク位置 |
+    /// |------------------|-------------------------------|------------------------------------|------------|
+    /// | CreateNew        | IOException をスロー          | 新規作成                           | 先頭       |
+    /// | Create           | 内容を消去して新規作成        | 新規作成                           | 先頭       |
+    /// | Open             | 既存ファイルを開く            | FileNotFoundException をスロー     | 先頭       |
+    /// | OpenOrCreate     | 既存ファイルを開く            | 新規作成                           | 先頭       |
+    /// | Truncate         | 内容を消去して新規作成        | FileNotFoundException をスロー     | 先頭       |
+    /// | Append           | 既存ファイルを開く            | 新規作成                           | 末尾       |
+    /// |------------------|-------------------------------|------------------------------------|------------|
+    /// </summary>
+    public enum FileMode
+    {
+
+        /// <summary>
+        /// 新しいファイルを作成します。
+        /// ファイルが既に存在する場合は IOException 例外がスローされます。
+        /// </summary>
+        CreateNew = 1,
+
+        /// <summary>
+        /// 新しいファイルを作成します。
+        /// ファイルが存在する場合は Truncate を使用した要求と等価です。
+        /// </summary>
+        Create = 2,
+
+        /// <summary>
+        /// ファイルが存在する場合はそのファイルを開きます。
+        /// 存在しない場合は FileNotFoundException 例外がスローされます。
+        /// </summary>
+        Open = 3,
+
+        /// <summary>
+        /// ファイルが存在する場合はそのファイルを開きます。
+        /// 存在しない場合は新しいファイルを作成します。
+        /// </summary>
+        OpenOrCreate = 4,
+
+        /// <summary>
+        /// ファイルは開かれると、サイズが 0 バイトになるように切り詰められます。
+        /// 存在しない場合は FileNotFoundException 例外がスローされます。
+        /// </summary>
+        Truncate = 5,
+
+        /// <summary>
+        /// ファイルが存在する場合はそのファイルを開き、ファイルの末尾にシークします。
+        /// 存在しない場合は新しいファイルを作成します。
+        /// </summary>
+        Append = 6,
+    }
+
+    public enum FileAccess
+    {
+        /// <summary>
+        /// ファイルの読み取りアクセス。
+        /// </summary>
+        Read = 1,
+
+        /// <summary>
+        /// ファイルへの書き込みアクセス。 
+        /// </summary>
+        Write = 2,
+
+        /// <summary>
+        /// ファイルへの読み取り/書き込みアクセス。
+        /// </summary>
+        ReadWrite = 3,
+    }
+
+    public enum FileShare
+    {
+        /// <summary>
+        /// 現在のファイルの共有を解除します。 
+        /// ファイルを閉じるまで、このプロセスまたは別のプロセスがファイルを開く要求をしても失敗します。
+        /// </summary>
+        None = 0,
+
+        /// <summary>
+        /// 後続の読み取り用のファイルを開くことを許可します。
+        /// </summary>
+        Read = 1,
+
+        /// <summary>
+        /// 後続の書き込み用のファイルを開くことを許可します。
+        /// </summary>
+        Write = 2,
+
+        /// <summary>
+        /// 後続の読み取り用または書き込み用のファイルを開くことを許可します。
+        /// </summary>
+        ReadWrite = 3,
+
+        /// <summary>
+        /// 後続のファイルの削除を許可します。
+        /// </summary>
+        Delete = 4,
+
+        /// <summary>
+        /// ファイル ハンドルを子プロセスで継承できるようにします。
+        /// </summary>
+        Inheritable = 16,
+    }
+
+    public interface IFileAccess
+    {
+
+        Stream Open(string path, FileMode mode, FileAccess access, FileShare share);
+
+        bool Exists(string path);
+
+        void Delete(string path);
+    }
+}

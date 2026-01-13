@@ -1,0 +1,48 @@
+﻿using FluentFTP;
+using iTunesSyncer.FileAccess;
+using System.IO;
+
+namespace iTunesSyncer.FtpFileAccess
+{
+    public class FtpFileAccess : IFileAccess
+    {
+        private readonly FtpClient _ftpClient;
+
+        public FtpFileAccess(FtpClient ftpClient)
+        {
+            _ftpClient = ftpClient;
+        }
+
+        public void Delete(string path)
+        {
+            _ftpClient.ConnectIfDisconnected();
+
+            _ftpClient.DeleteFile(path);
+        }
+
+        public bool Exists(string path)
+        {
+            _ftpClient.ConnectIfDisconnected();
+
+            return _ftpClient.FileExists(path);
+        }
+
+        public Stream OpenRead(string path)
+        {
+            _ftpClient.ConnectIfDisconnected();
+
+            var stream = _ftpClient.OpenRead(path, FtpDataType.Binary);
+
+            return new FtpStream(_ftpClient, stream);
+        }
+
+        public Stream OpenWrite(string path)
+        {
+            _ftpClient.ConnectIfDisconnected();
+
+            var stream = _ftpClient.OpenWrite(path, FtpDataType.Binary);
+
+            return new FtpStream(_ftpClient, stream);
+        }
+    }
+}

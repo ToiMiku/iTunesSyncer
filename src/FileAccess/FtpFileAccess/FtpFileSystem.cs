@@ -1,0 +1,65 @@
+﻿using FluentFTP;
+using iTunesSyncer.FileAccess;
+using System;
+using System.Net;
+
+namespace iTunesSyncer.FtpFileAccess
+{
+    internal class FtpFileSystem : IFileSystem, IDisposable
+    {
+
+        public IFileAccess FileAccess { get; private set; }
+
+        public IDirectoryAccess DirectoryAccess { get; private set; }
+
+        private FtpClient _ftpClient;
+
+        public FtpFileSystem(string server, int port, string username, string password)
+        {
+            _ftpClient = new FtpClient()
+            {
+                Host = server,
+                Port = port,
+                Credentials = new NetworkCredential(username, password)
+            };
+
+            FileAccess = new FtpFileAccess(_ftpClient);
+            DirectoryAccess = new FtpDirectoryAccess(_ftpClient);
+        }
+
+        private bool disposedValue = false;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // マネージド状態を破棄します (マネージド オブジェクト)
+                    // 処理なし
+                }
+
+                // アンマネージド リソース (アンマネージド オブジェクト) を解放し、ファイナライザーをオーバーライドします
+                // 大きなフィールドを null に設定します
+                _ftpClient?.Disconnect();
+                _ftpClient?.Dispose();
+                _ftpClient = null;
+
+                disposedValue = true;
+            }
+        }
+
+        ~FtpFileSystem()
+        {
+            // このコードを変更しないでください。クリーンアップ コードを 'Dispose(bool disposing)' メソッドに記述します
+            Dispose(disposing: false);
+        }
+
+        public void Dispose()
+        {
+            // このコードを変更しないでください。クリーンアップ コードを 'Dispose(bool disposing)' メソッドに記述します
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+    }
+}

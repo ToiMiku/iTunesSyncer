@@ -1,7 +1,10 @@
 ﻿# iTunesSyncer
 
-iTunesで管理しているプレイリスト情報を元に、
-楽曲ファイルとプレイリストを同期する Windows 向けツールです。
+PC上のiTunesで管理している音楽ファイルとプレイリストをそのまま、USB・SDカード・Androidスマホに同期させるWindowsのツールです。
+AndroidアプリのVLCとPowerAmpに対応しています。
+
+<img width="1097" height="631" alt="image" src="https://github.com/user-attachments/assets/5c12c05e-88fb-4fe9-9707-12b76c55ea48" />
+
 
 ## ダウンロード
 [Releases](../../releases) から最新版をダウンロードしてください。
@@ -16,6 +19,21 @@ iTunesで管理しているプレイリスト情報を元に、
 6. インポートを実行すると、インポート元とエクスポート先のファイルを比較し
 　　差分を表示します
 7. 差分内容を確認し、同期を実行
+
+## エクスポート先設定
+1. エクスポート先にはローカルフォルダとFTPから選択可能
+2. プレイリストフォーマットは以下から選択可能
+　・M3U
+　・M3U8
+　・XSPF
+
+<img width="697" height="499" alt="image" src="https://github.com/user-attachments/assets/06892107-6555-4ef3-96b8-0f55f051053f" />
+
+## 注意事項
+・本ツールは iTunes の管理情報を変更しません
+・コピー処理のみを行います
+・楽曲ファイルの権利・利用については各自の責任でお願いします
+
 
 ## 動作環境
 - Windows 10で動作確認済み
